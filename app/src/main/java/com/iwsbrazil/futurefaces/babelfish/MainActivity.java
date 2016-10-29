@@ -40,6 +40,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -155,21 +156,33 @@ public class MainActivity extends AppCompatActivity implements
 
     private void setUpSpinner() {
         spinner = (Spinner) findViewById(R.id.spinner);
-        final List<String> locales = new ArrayList<>(Arrays.asList(
-                Locale.ENGLISH.toLanguageTag(),
-                Locale.FRANCE.toLanguageTag(),
-                Locale.ITALIAN.toLanguageTag(),
-                Locale.GERMAN.toLanguageTag(),
-                "pt-BR"));
+
+        //Available locales for the app
+        Locale localePtBr = new Locale("pt", "BR");
+        List<Locale> locales = new ArrayList<>(Arrays.asList(
+                Locale.ENGLISH,
+                Locale.FRANCE,
+                Locale.ITALIAN,
+                Locale.GERMAN,
+                localePtBr));
+
+        final List<String> spinnerArray = new ArrayList<>();
+        final HashMap<String, String> spinnerMap = new HashMap<>();
+        for (int i = 0; i < locales.size(); i++) {
+            spinnerArray.add(locales.get(i).getDisplayName());
+            spinnerMap.put(locales.get(i).getDisplayName(), locales.get(i).toLanguageTag());
+        }
+
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, locales);
+                android.R.layout.simple_spinner_item, spinnerArray);
         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(dataAdapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String language = locales.get(i);
+                String language = spinnerMap.get(spinnerArray.get(i));
                 sourceLanguage = language;
+                Log.d("sourceLanguage", sourceLanguage);
                 setLanguage(language);
                 textToSpeech.setLanguage(new Locale(language));
             }
@@ -243,9 +256,9 @@ public class MainActivity extends AppCompatActivity implements
 
         String text = matches.get(0);
 
-        if(text == null) return;
-        if(text.isEmpty()) return;
-        if(avoidDuplicates.contains(text)) return;
+        if (text == null) return;
+        if (text.isEmpty()) return;
+        if (avoidDuplicates.contains(text)) return;
         avoidDuplicates.add(text);
 
         sendMessage(text);
@@ -278,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
 
-                    if(sourceLanguage.equals(lcl)) {
+                    if (sourceLanguage.equals(lcl)) {
                         return msg;
                     } else {
                         return translate(msg, lcl, sourceLanguage);
