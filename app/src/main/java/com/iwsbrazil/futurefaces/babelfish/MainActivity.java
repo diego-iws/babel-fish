@@ -1,6 +1,7 @@
 package com.iwsbrazil.futurefaces.babelfish;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
@@ -13,7 +14,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.services.translate.Translate;
+import com.google.api.services.translate.model.TranslationsListResponse;
+
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
@@ -27,14 +36,29 @@ public class MainActivity extends AppCompatActivity implements
     private SpeechRecognizer speech = null;
     private String LOG_TAG = "Voice";
 
-//    private static Translate translate;
-//
-//    public static Translate getTranslate() {
-//        if (translate == null) {
-//            translate = TranslateOptions.builder().apiKey("AIzaSyBQXIDyiEqjOSSoFdFGECMD-GUSzUgshg4").build().service();
-//        }
-//        return translate;
-//    }
+    public String translate(String text, String langFrom, String langTo) throws Exception {
+        String key = getString(R.string.google_api_key);
+
+        // Set up the HTTP transport and JSON factory
+        HttpTransport httpTransport = new NetHttpTransport();
+        JsonFactory jsonFactory = AndroidJsonFactory.getDefaultInstance();
+
+        Translate.Builder translateBuilder = new Translate.Builder(httpTransport, jsonFactory, null);
+        translateBuilder.setApplicationName(getString(R.string.app_name));
+
+        Translate translate = translateBuilder.build();
+
+        List<String> q = new ArrayList<String>();
+        q.add(text);
+
+        Translate.Translations.List list = translate.translations().list(q, langTo);
+        list.setKey(key);
+        list.setSource(langFrom);
+        TranslationsListResponse translateResponse = list.execute();
+        String response = translateResponse.getTranslations().get(0).getTranslatedText();
+
+        return response;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,18 +149,29 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onResults(Bundle results) {
+    public void onResults(final Bundle results) {
         Log.i(LOG_TAG, "onResults");
-        ArrayList<String> matches = results
-                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-
-//        returnedText.setText(matches.get(0));
-
+        ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = matches.get(0);
 
-        // Translates some text into English
-//        Translation translation = getTranslate().translate(text, Translate.TranslateOption.sourceLanguage("pt"), Translate.TranslateOption.targetLanguage("en"));
-//        returnedText.setText(text + "\n" + translation.translatedText());
+        new AsyncTask<String, String, String>() {
+            @Override
+            protected String doInBackground(String[] objects) {
+                try {
+                    String text = objects[0];
+                    String translated = translate(text, "pt", "en");
+                    return text + "\n" + translated;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                returnedText.setText(s);
+            }
+        }.execute(text);
     }
 
     @Override
