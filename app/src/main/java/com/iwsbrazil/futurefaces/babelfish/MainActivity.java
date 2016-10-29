@@ -5,8 +5,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
-import android.support.annotation.NonNull;
 import android.speech.tts.TextToSpeech;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +14,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -30,12 +31,16 @@ import com.google.api.services.translate.Translate;
 import com.google.api.services.translate.model.TranslationsListResponse;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -62,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements
     private Translate translate;
     private String sourceLanguage;
 
+    private List<String> friends = new ArrayList<>();
+
     public Translate getTranslate() {
         if (translate == null) {
             HttpTransport httpTransport = new NetHttpTransport();
@@ -74,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private DatabaseReference getFirebase() {
-        if(firebase == null) {
+        if (firebase == null) {
             firebase = FirebaseDatabase.getInstance().getReference();
 
             FirebaseAuth.getInstance().signInWithEmailAndPassword("teste@teste.com", "123456")
@@ -231,26 +238,117 @@ public class MainActivity extends AppCompatActivity implements
         if (matches == null) return;
 
         String text = matches.get(0);
-        getFirebase().child("test").setValue(text);
 
-        new AsyncTask<String, String, String>() {
-            @Override
-            protected String doInBackground(String[] objects) {
-                try {
-                    String text = objects[0];
-                    return translate(text, sourceLanguage, "en");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return e.getMessage();
+        sendMessage(text);
+
+//        new AsyncTask<String, String, String>() {
+//            @Override
+//            protected String doInBackground(String[] objects) {
+//                try {
+//                    String text = objects[0];
+//                    return translate(text, sourceLanguage, "en");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    return e.getMessage();
+//                }
+//            }
+//
+//            @Override
+//            protected void onPostExecute(String s) {
+//                returnedText.setText(s);
+//                speakOut(s);
+//            }
+//        }.execute(text);
+    }
+
+    public void sendMessage(String text) {
+
+        EditText editText = (EditText) findViewById(R.id.user_name);
+        final String myName = editText.getText().toString();
+
+        final String room = "TestRoom";
+        Message message = new Message();
+        message.setMessage(text);
+        message.setLocale("pt");
+
+        for (String name : friends) {
+            if (!name.equals(myName)) {
+                getFirebase().child(room).child("chat").child(name).child(String.valueOf(System.currentTimeMillis())).setValue(message);
+            }
+        }
+    }
+
+    public void textToSpeechPlay(Message message) {
+        Log.d("asdawdawdawd", message.getMessage());
+    }
+
+    public void joinChat(View view) {
+        EditText editText = (EditText) findViewById(R.id.user_name);
+        final String room = "TestRoom";
+        final String name = editText.getText().toString();
+
+        getFirebase().child(room).child("friends").child(name).setValue("name");
+
+        getFirebase().child(room).child("chat").child(name).addChildEventListener(
+                new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        Message message = dataSnapshot.getValue(Message.class);
+                        textToSpeechPlay(message);
+                        dataSnapshot.getRef().removeValue();
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
                 }
-            }
+        );
 
-            @Override
-            protected void onPostExecute(String s) {
-                returnedText.setText(s);
-                speakOut(s);
-            }
-        }.execute(text);
+        getFirebase().child(room).child("friends").addChildEventListener(
+                new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        friends.add(dataSnapshot.getKey());
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                }
+        );
+
     }
 
     @Override

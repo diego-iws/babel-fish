@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BabelFish</string>
+    <string name="user_name">User name</string>
+    <string name="ok">OK</string>
 </resources>
