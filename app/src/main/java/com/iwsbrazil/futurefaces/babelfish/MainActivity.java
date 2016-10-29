@@ -36,23 +36,30 @@ public class MainActivity extends AppCompatActivity implements
     private SpeechRecognizer speech = null;
     private String LOG_TAG = "Voice";
 
+    private Translate translate;
+
+    public Translate getTranslate() {
+        if (translate == null) {
+
+            // Set up the HTTP transport and JSON factory
+            HttpTransport httpTransport = new NetHttpTransport();
+            JsonFactory jsonFactory = AndroidJsonFactory.getDefaultInstance();
+
+            Translate.Builder translateBuilder = new Translate.Builder(httpTransport, jsonFactory, null);
+            translateBuilder.setApplicationName(getString(R.string.app_name));
+
+            this.translate = translateBuilder.build();
+        }
+        return translate;
+    }
+
     public String translate(String text, String langFrom, String langTo) throws Exception {
-        String key = getString(R.string.google_api_key);
-
-        // Set up the HTTP transport and JSON factory
-        HttpTransport httpTransport = new NetHttpTransport();
-        JsonFactory jsonFactory = AndroidJsonFactory.getDefaultInstance();
-
-        Translate.Builder translateBuilder = new Translate.Builder(httpTransport, jsonFactory, null);
-        translateBuilder.setApplicationName(getString(R.string.app_name));
-
-        Translate translate = translateBuilder.build();
 
         List<String> q = new ArrayList<String>();
         q.add(text);
 
-        Translate.Translations.List list = translate.translations().list(q, langTo);
-        list.setKey(key);
+        Translate.Translations.List list = getTranslate().translations().list(q, langTo);
+        list.setKey(getString(R.string.google_api_key));
         list.setSource(langFrom);
         TranslationsListResponse translateResponse = list.execute();
         String response = translateResponse.getTranslations().get(0).getTranslatedText();
