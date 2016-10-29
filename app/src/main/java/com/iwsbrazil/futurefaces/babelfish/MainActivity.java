@@ -27,6 +27,7 @@ import com.google.api.services.translate.model.TranslationsListResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,7 +36,7 @@ import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErro
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.setLanguage;
 
 public class MainActivity extends AppCompatActivity implements
-        RecognitionListener,  TextToSpeech.OnInitListener {
+        RecognitionListener, TextToSpeech.OnInitListener {
 
     private TextView returnedText;
     private ToggleButton toggleButton;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements
     private Intent recognizerIntent;
 
     private Translate translate;
+    private String sourceLanguage;
 
     public Translate getTranslate() {
         if (translate == null) {
@@ -67,16 +69,12 @@ public class MainActivity extends AppCompatActivity implements
 
     public String translate(String text, String langFrom, String langTo) throws Exception {
 
-        List<String> q = new ArrayList<String>();
-        q.add(text);
-
-        Translate.Translations.List list = getTranslate().translations().list(q, langTo);
+        List<String> query = new ArrayList<>(Collections.singletonList(text));
+        Translate.Translations.List list = getTranslate().translations().list(query, langTo);
         list.setKey(getString(R.string.google_api_key));
         list.setSource(langFrom);
         TranslationsListResponse translateResponse = list.execute();
-        String response = translateResponse.getTranslations().get(0).getTranslatedText();
-
-        return response;
+        return translateResponse.getTranslations().get(0).getTranslatedText();
     }
 
     @Override
@@ -94,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements
 
         textToSpeech = new TextToSpeech(this, this);
 
-        setUpLanguages();
+        setUpSpinner();
         recognizerIntent = createRecognizerIntent(this, spinner.getSelectedItem().toString());
 
         toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -115,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
-    private void setUpLanguages() {
+    private void setUpSpinner() {
         spinner = (Spinner) findViewById(R.id.spinner);
         final List<String> locales = new ArrayList<>(Arrays.asList(
                 Locale.ENGLISH.toLanguageTag(),
@@ -130,8 +128,10 @@ public class MainActivity extends AppCompatActivity implements
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                setLanguage(locales.get(i));
-                textToSpeech.setLanguage(new Locale(locales.get(i)));
+                String language = locales.get(i);
+                sourceLanguage = language;
+                setLanguage(language);
+                textToSpeech.setLanguage(new Locale(language));
             }
 
             @Override
@@ -140,11 +140,6 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
         spinner.setSelection(0);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     @Override
@@ -202,6 +197,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onResults(final Bundle results) {
         Log.i(LOG_TAG, "onResults");
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+        if (matches == null) return;
+
         String text = matches.get(0);
 
         new AsyncTask<String, String, String>() {
@@ -209,8 +207,7 @@ public class MainActivity extends AppCompatActivity implements
             protected String doInBackground(String[] objects) {
                 try {
                     String text = objects[0];
-                    String translated = translate(text, "pt", "en");
-                    return text + "\n" + translated;
+                    return translate(text, sourceLanguage, "en");
                 } catch (Exception e) {
                     e.printStackTrace();
                     return e.getMessage();
@@ -220,13 +217,13 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             protected void onPostExecute(String s) {
                 returnedText.setText(s);
+                speakOut(s);
             }
         }.execute(text);
     }
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        Log.i(LOG_TAG, "onRmsChanged: " + rmsdB);
         progressBar.setProgress((int) rmsdB);
     }
 
@@ -250,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void speakOut(String text) {
-
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         Log.d("SPEAK", text);
     }
