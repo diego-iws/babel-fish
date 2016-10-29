@@ -40,7 +40,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -68,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements
     private String sourceLanguage;
 
     private List<String> friends = new ArrayList<>();
+    private String lastOnResultText = "";
 
     public Translate getTranslate() {
         if (translate == null) {
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements
         textToSpeech = new TextToSpeech(this, this);
 
         setUpSpinner();
-        recognizerIntent = createRecognizerIntent(this, spinner.getSelectedItem().toString());
+        recognizerIntent = createRecognizerIntent(this);
 
         toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
@@ -239,26 +239,11 @@ public class MainActivity extends AppCompatActivity implements
 
         String text = matches.get(0);
 
+        if (lastOnResultText.equals(text)) return;
+
         sendMessage(text);
 
-//        new AsyncTask<String, String, String>() {
-//            @Override
-//            protected String doInBackground(String[] objects) {
-//                try {
-//                    String text = objects[0];
-//                    return translate(text, sourceLanguage, "en");
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    return e.getMessage();
-//                }
-//            }
-//
-//            @Override
-//            protected void onPostExecute(String s) {
-//                returnedText.setText(s);
-//                speakOut(s);
-//            }
-//        }.execute(text);
+        lastOnResultText = text;
     }
 
     public void sendMessage(String text) {
@@ -269,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements
         final String room = "TestRoom";
         Message message = new Message();
         message.setMessage(text);
-        message.setLocale("pt");
+        message.setLocale(sourceLanguage.substring(0, 2));
 
         for (String name : friends) {
             if (!name.equals(myName)) {
@@ -278,8 +263,29 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void textToSpeechPlay(Message message) {
+    public void textToSpeechPlay(final Message message) {
         Log.d("asdawdawdawd", message.getMessage());
+
+        new AsyncTask<Message, String, String>() {
+            @Override
+            protected String doInBackground(Message[] objects) {
+                try {
+                    Message msgin = objects[0];
+                    String msg = msgin.getMessage();
+                    String lcl = msgin.getLocale();
+                    return translate(msg, sourceLanguage, lcl);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                returnedText.setText(s);
+                speakOut(s);
+            }
+        }.execute(message);
     }
 
     public void joinChat(View view) {

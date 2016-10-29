@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 
+import java.util.Locale;
+
 /**
  * Created by administrador on 29/10/16.
  */
@@ -14,9 +16,9 @@ public class SpeechRecognizerHelper {
     private static final int MAX_RESULTS = 1;
     private static Intent recognizerIntent;
 
-    public static Intent createRecognizerIntent(Context context, String language) {
+    public static Intent createRecognizerIntent(Context context) {
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.getPackageName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, MAX_RESULTS);
