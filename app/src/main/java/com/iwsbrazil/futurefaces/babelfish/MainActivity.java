@@ -1,10 +1,8 @@
 package com.iwsbrazil.futurefaces.babelfish;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,7 +14,9 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import java.util.ArrayList;
-import java.util.Locale;
+
+import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
+import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
 
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener {
@@ -25,45 +25,16 @@ public class MainActivity extends AppCompatActivity implements
     private ToggleButton toggleButton;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
-    private Intent recognizerIntent;
     private String LOG_TAG = "Voice";
 
-    public static String getErrorText(int errorCode) {
-        String message;
-        switch (errorCode) {
-            case SpeechRecognizer.ERROR_AUDIO:
-                message = "Audio recording error";
-                break;
-            case SpeechRecognizer.ERROR_CLIENT:
-                message = "Client side error";
-                break;
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                message = "Insufficient permissions";
-                break;
-            case SpeechRecognizer.ERROR_NETWORK:
-                message = "Network error";
-                break;
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                message = "Network timeout";
-                break;
-            case SpeechRecognizer.ERROR_NO_MATCH:
-                message = "No match";
-                break;
-            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                message = "RecognitionService busy";
-                break;
-            case SpeechRecognizer.ERROR_SERVER:
-                message = "error from server";
-                break;
-            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                message = "No speech input";
-                break;
-            default:
-                message = "Didn't understand, please try again.";
-                break;
-        }
-        return message;
-    }
+//    private static Translate translate;
+//
+//    public static Translate getTranslate() {
+//        if (translate == null) {
+//            translate = TranslateOptions.builder().apiKey("AIzaSyBQXIDyiEqjOSSoFdFGECMD-GUSzUgshg4").build().service();
+//        }
+//        return translate;
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +47,7 @@ public class MainActivity extends AppCompatActivity implements
         progressBar.setVisibility(View.INVISIBLE);
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(this);
-        recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
-                "pt-BR");
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
-                this.getPackageName());
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        final Intent recognizerIntent = createRecognizerIntent(this, "pt-BR");
 
         toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
@@ -116,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements
             speech.destroy();
             Log.i(LOG_TAG, "destroy");
         }
-
     }
 
     @Override
@@ -166,11 +129,14 @@ public class MainActivity extends AppCompatActivity implements
         Log.i(LOG_TAG, "onResults");
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        String text = "";
-        for (String result : matches)
-            text += result + "\n";
 
-        returnedText.setText(text);
+//        returnedText.setText(matches.get(0));
+
+        String text = matches.get(0);
+
+        // Translates some text into English
+//        Translation translation = getTranslate().translate(text, Translate.TranslateOption.sourceLanguage("pt"), Translate.TranslateOption.targetLanguage("en"));
+//        returnedText.setText(text + "\n" + translation.translatedText());
     }
 
     @Override
