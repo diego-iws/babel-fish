@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -12,14 +13,21 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.translate.Translate;
 import com.google.api.services.translate.model.TranslationsListResponse;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,30 +44,52 @@ public class MainActivity extends AppCompatActivity implements
     private SpeechRecognizer speech = null;
     private String LOG_TAG = "Voice";
 
+    private DatabaseReference firebase;
+
     private Translate translate;
 
     public Translate getTranslate() {
         if (translate == null) {
-
-            // Set up the HTTP transport and JSON factory
             HttpTransport httpTransport = new NetHttpTransport();
             JsonFactory jsonFactory = AndroidJsonFactory.getDefaultInstance();
-
             Translate.Builder translateBuilder = new Translate.Builder(httpTransport, jsonFactory, null);
             translateBuilder.setApplicationName(getString(R.string.app_name));
-
             this.translate = translateBuilder.build();
         }
         return translate;
     }
 
+    private DatabaseReference getFirebase() {
+        if(firebase == null) {
+            firebase = FirebaseDatabase.getInstance().getReference();
+
+            FirebaseAuth.getInstance().signInWithEmailAndPassword("teste@teste.com", "123456")
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d(LOG_TAG, "signIn:onComplete:" + task.isSuccessful());
+
+                            if (task.isSuccessful()) {
+                                Toast.makeText(MainActivity.this, "Sign In Sucessfull",
+                                        Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(MainActivity.this, "Sign In Failed",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        }
+
+        return firebase;
+    }
+
     public String translate(String text, String langFrom, String langTo) throws Exception {
 
-        List<String> q = new ArrayList<String>();
+        List<String> q = new ArrayList<>();
         q.add(text);
 
         Translate.Translations.List list = getTranslate().translations().list(q, langTo);
-        list.setKey(getString(R.string.google_api_key));
+        list.setKey(getString(R.string.google_translate_key));
         list.setSource(langFrom);
         TranslationsListResponse translateResponse = list.execute();
         String response = translateResponse.getTranslations().get(0).getTranslatedText();
@@ -96,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         });
-
     }
 
     @Override
@@ -160,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements
         Log.i(LOG_TAG, "onResults");
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = matches.get(0);
+        getFirebase().child("test").setValue(text);
 
         new AsyncTask<String, String, String>() {
             @Override
@@ -167,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements
                 try {
                     String text = objects[0];
                     String translated = translate(text, "pt", "en");
+
                     return text + "\n" + translated;
                 } catch (Exception e) {
                     e.printStackTrace();

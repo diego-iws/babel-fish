@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="google_api_key">AIzaSyBQXIDyiEqjOSSoFdFGECMD-GUSzUgshg4</string>
+    <string name="google_translate_key">AIzaSyBQXIDyiEqjOSSoFdFGECMD-GUSzUgshg4</string>
 </resources>

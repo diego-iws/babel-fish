@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "306186870348",
+    "firebase_url": "https://babel-188c8.firebaseio.com",
+    "project_id": "babel-188c8",
+    "storage_bucket": "babel-188c8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306186870348:android:2b61c734beb389fa",
+        "android_client_info": {
+          "package_name": "com.iwsbrazil.futurefaces.babelfish"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "306186870348-39ce6agq4r1d5ofpprjseakqkqsspd1i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [ { "current_key" : "AIzaSyB5RLN2pZLw31_t1xBOhttzt_QhcnkKvPs"}],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
