@@ -40,8 +40,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
@@ -67,7 +69,8 @@ public class MainActivity extends AppCompatActivity implements
     private String sourceLanguage;
 
     private List<String> friends = new ArrayList<>();
-    private String lastOnResultText = "";
+
+    private Set<String> avoidDuplicates = new HashSet<>();
 
     public Translate getTranslate() {
         if (translate == null) {
@@ -239,11 +242,12 @@ public class MainActivity extends AppCompatActivity implements
 
         String text = matches.get(0);
 
-        if (lastOnResultText.equals(text)) return;
+        if(text == null) return;
+        if(text.isEmpty()) return;
+        if(avoidDuplicates.contains(text)) return;
+        avoidDuplicates.add(text);
 
         sendMessage(text);
-
-        lastOnResultText = text;
     }
 
     public void sendMessage(String text) {
@@ -264,7 +268,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void textToSpeechPlay(final Message message) {
-        Log.d("asdawdawdawd", message.getMessage());
 
         new AsyncTask<Message, String, String>() {
             @Override
@@ -273,7 +276,12 @@ public class MainActivity extends AppCompatActivity implements
                     Message msgin = objects[0];
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
-                    return translate(msg, sourceLanguage, lcl);
+
+                    if(sourceLanguage.equals(lcl)) {
+                        return msg;
+                    } else {
+                        return translate(msg, lcl, sourceLanguage);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                     return e.getMessage();
@@ -301,7 +309,7 @@ public class MainActivity extends AppCompatActivity implements
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         Message message = dataSnapshot.getValue(Message.class);
                         textToSpeechPlay(message);
-                        dataSnapshot.getRef().removeValue();
+//                        dataSnapshot.getRef().removeValue();
                     }
 
                     @Override
