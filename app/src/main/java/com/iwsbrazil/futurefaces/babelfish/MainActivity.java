@@ -5,12 +5,16 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -22,19 +26,27 @@ import com.google.api.services.translate.Translate;
 import com.google.api.services.translate.model.TranslationsListResponse;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
+import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.setLanguage;
 
 public class MainActivity extends AppCompatActivity implements
-        RecognitionListener {
+        RecognitionListener,  TextToSpeech.OnInitListener {
 
     private TextView returnedText;
     private ToggleButton toggleButton;
     private ProgressBar progressBar;
-    private SpeechRecognizer speech = null;
+    private Spinner spinner;
+
+    private TextToSpeech textToSpeech;
+
+    private SpeechRecognizer speechRecognizer = null;
     private String LOG_TAG = "Voice";
+    private Intent recognizerIntent;
 
     private Translate translate;
 
@@ -76,9 +88,14 @@ public class MainActivity extends AppCompatActivity implements
         toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
 
         progressBar.setVisibility(View.INVISIBLE);
-        speech = SpeechRecognizer.createSpeechRecognizer(this);
-        speech.setRecognitionListener(this);
-        final Intent recognizerIntent = createRecognizerIntent(this, "pt-BR");
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(this);
+
+        textToSpeech = new TextToSpeech(this, this);
+
+        setUpLanguages();
+        recognizerIntent = createRecognizerIntent(this, spinner.getSelectedItem().toString());
 
         toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
@@ -88,15 +105,41 @@ public class MainActivity extends AppCompatActivity implements
                 if (isChecked) {
                     progressBar.setVisibility(View.VISIBLE);
                     progressBar.setIndeterminate(true);
-                    speech.startListening(recognizerIntent);
+                    speechRecognizer.startListening(recognizerIntent);
                 } else {
                     progressBar.setIndeterminate(false);
                     progressBar.setVisibility(View.INVISIBLE);
-                    speech.stopListening();
+                    speechRecognizer.stopListening();
                 }
             }
         });
+    }
 
+    private void setUpLanguages() {
+        spinner = (Spinner) findViewById(R.id.spinner);
+        final List<String> locales = new ArrayList<>(Arrays.asList(
+                Locale.ENGLISH.toLanguageTag(),
+                Locale.FRANCE.toLanguageTag(),
+                Locale.ITALIAN.toLanguageTag(),
+                Locale.GERMAN.toLanguageTag(),
+                "pt-BR"));
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, locales);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(dataAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                setLanguage(locales.get(i));
+                textToSpeech.setLanguage(new Locale(locales.get(i)));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        spinner.setSelection(0);
     }
 
     @Override
@@ -107,8 +150,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        if (speech != null) {
-            speech.destroy();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
             Log.i(LOG_TAG, "destroy");
         }
     }
@@ -187,4 +230,37 @@ public class MainActivity extends AppCompatActivity implements
         progressBar.setProgress((int) rmsdB);
     }
 
+    @Override
+    public void onInit(int status) {
+
+        if (status == TextToSpeech.SUCCESS) {
+
+            int result = textToSpeech.setLanguage(Locale.US);
+
+            if (result == TextToSpeech.LANG_MISSING_DATA
+                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTS", "This Language is not supported");
+            } else {
+                speakOut(returnedText.getText().toString());
+            }
+
+        } else {
+            Log.e("TTS", "Initilization Failed!");
+        }
+    }
+
+    private void speakOut(String text) {
+
+        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        Log.d("SPEAK", text);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+        super.onDestroy();
+    }
 }
