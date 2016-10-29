@@ -7,9 +7,12 @@ import android.speech.SpeechRecognizer;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -17,6 +20,11 @@ import java.util.ArrayList;
 
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
 import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
+import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.setLanguage;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener {
@@ -24,8 +32,12 @@ public class MainActivity extends AppCompatActivity implements
     private TextView returnedText;
     private ToggleButton toggleButton;
     private ProgressBar progressBar;
+    private Spinner spinner;
+
+
     private SpeechRecognizer speech = null;
     private String LOG_TAG = "Voice";
+    private Intent recognizerIntent;
 
 //    private static Translate translate;
 //
@@ -47,7 +59,9 @@ public class MainActivity extends AppCompatActivity implements
         progressBar.setVisibility(View.INVISIBLE);
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(this);
-        final Intent recognizerIntent = createRecognizerIntent(this, "pt-BR");
+
+        setUpLanguages();
+        recognizerIntent = createRecognizerIntent(this, spinner.getSelectedItem().toString());
 
         toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
@@ -65,7 +79,32 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         });
+    }
 
+    private void setUpLanguages() {
+        spinner = (Spinner) findViewById(R.id.spinner);
+        final List<String> locales = new ArrayList<>(Arrays.asList(
+                Locale.ENGLISH.toLanguageTag(),
+                Locale.FRANCE.toLanguageTag(),
+                Locale.ITALIAN.toLanguageTag(),
+                Locale.GERMAN.toLanguageTag(),
+                "pt-BR"));
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, locales);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(dataAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                setLanguage(locales.get(i));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        spinner.setSelection(0);
     }
 
     @Override
@@ -130,13 +169,12 @@ public class MainActivity extends AppCompatActivity implements
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
-//        returnedText.setText(matches.get(0));
-
         String text = matches.get(0);
 
         // Translates some text into English
-//        Translation translation = getTranslate().translate(text, Translate.TranslateOption.sourceLanguage("pt"), Translate.TranslateOption.targetLanguage("en"));
-//        returnedText.setText(text + "\n" + translation.translatedText());
+        //Translation translation = getTranslate().translate(text, Translate.TranslateOption.sourceLanguage("pt"), Translate.TranslateOption.targetLanguage("en"));
+        //returnedText.setText(text + "\n" + translation.translatedText());
+        returnedText.setText(text);
     }
 
     @Override
