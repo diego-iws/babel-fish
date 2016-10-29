@@ -204,13 +204,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onEndOfSpeech() {
-        Log.i(LOG_TAG, "onEndOfSpeech");
-        progressBar.setIndeterminate(true);
-        toggleButton.setChecked(false);
-    }
-
-    @Override
     public void onError(int errorCode) {
         String errorMessage = getErrorText(errorCode);
         Log.d(LOG_TAG, "FAILED " + errorMessage);
@@ -231,6 +224,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onReadyForSpeech(Bundle arg0) {
         Log.i(LOG_TAG, "onReadyForSpeech");
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        Log.i(LOG_TAG, "onEndOfSpeech");
+        progressBar.setIndeterminate(true);
+        toggleButton.setChecked(false);
+        avoidDuplicates.clear();
     }
 
     @Override
@@ -309,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         Message message = dataSnapshot.getValue(Message.class);
                         textToSpeechPlay(message);
-//                        dataSnapshot.getRef().removeValue();
+                        dataSnapshot.getRef().removeValue();
                     }
 
                     @Override
