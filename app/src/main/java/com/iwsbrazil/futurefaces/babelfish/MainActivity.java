@@ -277,9 +277,9 @@ public class MainActivity extends AppCompatActivity implements
         message.setMessage(text);
         message.setLocale(sourceLanguage.substring(0, 2));
 
-        for (String name : friends) {
-            if (!name.equals(userName)) {
-                getFirebase().child(room).child("chat").child(name).push().setValue(message);
+        for (String friendName : friends) {
+            if (!friendName.equals(userName)) {
+                getFirebase().child(room).child("chat").child(friendName).push().setValue(message);
             }
         }
     }
@@ -314,18 +314,17 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void joinChat(View view) {
-        EditText editText = (EditText) findViewById(R.id.user_name);
-        final String name = editText.getText().toString();
+        userName = editText.getText().toString();
 
-        getFirebase().child(room).child("friends").child(name).setValue("name");
+        getFirebase().child(room).child("friends").child(userName).setValue("name");
 
-        getFirebase().child(room).child("chat").child(name).addChildEventListener(
+        getFirebase().child(room).child("chat").child(userName).addChildEventListener(
                 new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
                         textToSpeechPlay(message);
-                        dataSnapshot.getRef().removeValue();
+//                        dataSnapshot.getRef().removeValue();
                     }
 
                     @Override
