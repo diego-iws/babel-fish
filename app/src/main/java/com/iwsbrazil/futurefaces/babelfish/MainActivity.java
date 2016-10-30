@@ -36,6 +36,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,17 +47,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.createRecognizerIntent;
-import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.getErrorText;
-import static com.iwsbrazil.futurefaces.babelfish.SpeechRecognizerHelper.setLanguage;
+import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.createRecognizerIntent;
+import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.getErrorText;
+import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.setLanguage;
 
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener, TextToSpeech.OnInitListener {
 
-    private TextView returnedText;
     private ToggleButton toggleButton;
     private ProgressBar progressBar;
+
+    private TextView returnedText;
     private Spinner spinner;
+    private EditText editText;
+
+    private String room = "TestRoom";
+    private String userName;
 
     private TextToSpeech textToSpeech;
 
@@ -125,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements
         returnedText = (TextView) findViewById(R.id.textView1);
         progressBar = (ProgressBar) findViewById(R.id.progressBar1);
         toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
+        editText = (EditText) findViewById(R.id.user_name);
 
         progressBar.setVisibility(View.INVISIBLE);
 
@@ -182,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String language = spinnerMap.get(spinnerArray.get(i));
                 sourceLanguage = language;
-                Log.d("sourceLanguage", sourceLanguage);
                 setLanguage(language);
                 textToSpeech.setLanguage(new Locale(language));
             }
@@ -201,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
             Log.i(LOG_TAG, "destroy");
+
         }
     }
 
@@ -266,28 +273,24 @@ public class MainActivity extends AppCompatActivity implements
 
     public void sendMessage(String text) {
 
-        EditText editText = (EditText) findViewById(R.id.user_name);
-        final String myName = editText.getText().toString();
-
-        final String room = "TestRoom";
-        Message message = new Message();
+        BabelMessage message = new BabelMessage();
         message.setMessage(text);
         message.setLocale(sourceLanguage.substring(0, 2));
 
         for (String name : friends) {
-            if (!name.equals(myName)) {
-                getFirebase().child(room).child("chat").child(name).child(String.valueOf(System.currentTimeMillis())).setValue(message);
+            if (!name.equals(userName)) {
+                getFirebase().child(room).child("chat").child(name).push().setValue(message);
             }
         }
     }
 
-    public void textToSpeechPlay(final Message message) {
+    public void textToSpeechPlay(final BabelMessage message) {
 
-        new AsyncTask<Message, String, String>() {
+        new AsyncTask<BabelMessage, String, String>() {
             @Override
-            protected String doInBackground(Message[] objects) {
+            protected String doInBackground(BabelMessage[] objects) {
                 try {
-                    Message msgin = objects[0];
+                    BabelMessage msgin = objects[0];
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
 
@@ -312,7 +315,6 @@ public class MainActivity extends AppCompatActivity implements
 
     public void joinChat(View view) {
         EditText editText = (EditText) findViewById(R.id.user_name);
-        final String room = "TestRoom";
         final String name = editText.getText().toString();
 
         getFirebase().child(room).child("friends").child(name).setValue("name");
@@ -321,7 +323,7 @@ public class MainActivity extends AppCompatActivity implements
                 new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        Message message = dataSnapshot.getValue(Message.class);
+                        BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
                         textToSpeechPlay(message);
                         dataSnapshot.getRef().removeValue();
                     }
@@ -414,6 +416,7 @@ public class MainActivity extends AppCompatActivity implements
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
+        getFirebase().child(room).child(userName).getRef().removeValue();
         super.onDestroy();
     }
 }

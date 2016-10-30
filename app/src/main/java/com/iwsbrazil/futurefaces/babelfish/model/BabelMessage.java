@@ -1,10 +1,10 @@
-package com.iwsbrazil.futurefaces.babelfish;
+package com.iwsbrazil.futurefaces.babelfish.model;
 
 /**
  * Created by administrador on 29/10/16.
  */
 
-public class Message {
+public class BabelMessage {
 
     private String message;
     private String locale;

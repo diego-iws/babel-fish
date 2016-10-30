@@ -1,4 +1,4 @@
-package com.iwsbrazil.futurefaces.babelfish;
+package com.iwsbrazil.futurefaces.babelfish.util;
 
 import android.content.Context;
 import android.content.Intent;
