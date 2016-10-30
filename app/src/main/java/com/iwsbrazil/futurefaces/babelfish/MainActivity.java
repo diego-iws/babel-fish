@@ -8,6 +8,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -116,7 +117,9 @@ public class MainActivity extends AppCompatActivity implements
         list.setKey(getString(R.string.google_api_key));
         list.setSource(langFrom);
         TranslationsListResponse translateResponse = list.execute();
-        return translateResponse.getTranslations().get(0).getTranslatedText();
+        String response = translateResponse.getTranslations().get(0).getTranslatedText();
+        /* Fixes encoding bug with single, double quotes, ... */
+        return Html.fromHtml(response).toString();
     }
 
     @Override
@@ -291,9 +294,6 @@ public class MainActivity extends AppCompatActivity implements
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
 
-                    Log.d("doInBackground", lcl);
-                    Log.d("doInBackground", srcDestLanguage);
-
                     if (srcDestLanguage.equals(lcl)) {
                         return msg;
                     } else {
@@ -415,7 +415,9 @@ public class MainActivity extends AppCompatActivity implements
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
-        getFirebase().child(room).child("friends").child(userName).getRef().removeValue();
+        if (userName != null) {
+            getFirebase().child(room).child("friends").child(userName).removeValue();
+        }
         super.onDestroy();
     }
 }
