@@ -54,8 +54,8 @@ public class FirebaseManager {
     public void removeUser(String userName) {
         Log.d("remove", userName);
         getDatabaseReference().child(room).child("friends").child(userName).removeValue();
-        getDatabaseReference().child(room).child("chat").child(userName).removeEventListener(chatListener);
-        getDatabaseReference().child(room).child("friends").removeEventListener(friendsListener);
+        getDatabaseReference().removeEventListener(chatListener);
+        getDatabaseReference().removeEventListener(friendsListener);
     }
 
     public void addUser(String userName, final MainActivity mainActivity, final String language) {

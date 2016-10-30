@@ -2,6 +2,7 @@ package com.iwsbrazil.futurefaces.babelfish;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
@@ -13,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
@@ -68,11 +70,21 @@ public class MainActivity extends AppCompatActivity implements
 
         initTranslate(this);
 
-        FloatingActionButton buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
-        buttonSpeak.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
+        buttonSpeak.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                requirePermission();
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        requirePermission();
+                        buttonSpeak.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorAccent)));
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        speechRecognizer.stopListening();
+                        buttonSpeak.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+                        return true;
+                }
+                return false;
             }
         });
     }
