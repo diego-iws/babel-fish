@@ -6,43 +6,17 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.services.translate.Translate;
-import com.google.api.services.translate.model.TranslationsListResponse;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
+import com.iwsbrazil.futurefaces.babelfish.util.FirebaseManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -51,97 +25,57 @@ import java.util.Set;
 import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.createRecognizerIntent;
 import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.getErrorText;
 import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.setLanguage;
+import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.initTranslate;
+import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.translate;
 
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener, TextToSpeech.OnInitListener {
 
     private final static String LOG_TAG = "Voice";
 
-    private ToggleButton toggleButton;
-    private ProgressBar progressBar;
-    private TextView returnedText;
-    private Spinner spinner;
-    private EditText editText;
+    private FloatingActionButton buttonSpeak;
+    private CoordinatorLayout parentLayout;
 
-    private String room = "TestRoom";
     private String userName;
-    private String srcDestLanguage;
+    private String fullLanguage;
+    private String translationLanguage;
 
     private SpeechRecognizer speechRecognizer = null;
     private TextToSpeech textToSpeech;
     private Intent recognizerIntent;
 
-    private DatabaseReference firebase;
-    private Translate translate;
-
     private List<String> friends = new ArrayList<>();
     private Set<String> avoidDuplicates = new HashSet<>();
-
-    public Translate getTranslate() {
-        if (translate == null) {
-            HttpTransport httpTransport = new NetHttpTransport();
-            JsonFactory jsonFactory = AndroidJsonFactory.getDefaultInstance();
-            Translate.Builder translateBuilder = new Translate.Builder(httpTransport, jsonFactory, null);
-            translateBuilder.setApplicationName(getString(R.string.app_name));
-            this.translate = translateBuilder.build();
-        }
-        return translate;
-    }
-
-    private DatabaseReference getFirebase() {
-        if (firebase == null) {
-            firebase = FirebaseDatabase.getInstance().getReference();
-
-            FirebaseAuth.getInstance().signInWithEmailAndPassword("teste@teste.com", "123456")
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            Log.d(LOG_TAG, "signIn:onComplete:" + task.isSuccessful());
-
-                            if (task.isSuccessful()) {
-                                Toast.makeText(MainActivity.this, "Sign In Sucessfull",
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(MainActivity.this, "Sign In Failed",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-        }
-        return firebase;
-    }
-
-    public String translate(String text, String langFrom, String langTo) throws Exception {
-        List<String> query = new ArrayList<>(Collections.singletonList(text));
-        Translate.Translations.List list = getTranslate().translations().list(query, langTo);
-        list.setKey(getString(R.string.google_api_key));
-        list.setSource(langFrom);
-        TranslationsListResponse translateResponse = list.execute();
-        String response = translateResponse.getTranslations().get(0).getTranslatedText();
-        /* Fixes encoding bug with single, double quotes, ... */
-        return Html.fromHtml(response).toString();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        returnedText = (TextView) findViewById(R.id.textView1);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar1);
-        toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
-        editText = (EditText) findViewById(R.id.user_name);
+        buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
+        parentLayout = (CoordinatorLayout) findViewById(R.id.parent_layout);
 
-        progressBar.setVisibility(View.INVISIBLE);
+        Intent caller = getIntent();
+        userName = caller.getStringExtra("userName");
+        fullLanguage = caller.getStringExtra("language");
+        translationLanguage = fullLanguage.substring(0, 2);
+        FirebaseManager.getInstance().addUser(userName);
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         speechRecognizer.setRecognitionListener(this);
+        recognizerIntent = createRecognizerIntent(this);
+        setLanguage(fullLanguage);
 
+        initTranslate(this);
         textToSpeech = new TextToSpeech(this, this);
 
-        setUpSpinner();
-        recognizerIntent = createRecognizerIntent(this);
+        buttonSpeak.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                speechRecognizer.startListening(recognizerIntent);
+            }
+        });
 
-        toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        /*toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView,
@@ -156,49 +90,7 @@ public class MainActivity extends AppCompatActivity implements
                     speechRecognizer.stopListening();
                 }
             }
-        });
-    }
-
-    private void setUpSpinner() {
-        spinner = (Spinner) findViewById(R.id.spinner);
-
-        //Available locales for the app
-        Locale localePtBr = new Locale("pt", "BR");
-        List<Locale> locales = new ArrayList<>(Arrays.asList(
-                Locale.ENGLISH,
-                Locale.FRANCE,
-                Locale.ITALIAN,
-                Locale.GERMAN,
-                localePtBr));
-
-        final List<String> spinnerArray = new ArrayList<>();
-        final HashMap<String, String> spinnerMap = new HashMap<>();
-        for (int i = 0; i < locales.size(); i++) {
-            spinnerArray.add(locales.get(i).getDisplayName());
-            spinnerMap.put(locales.get(i).getDisplayName(), locales.get(i).toLanguageTag());
-        }
-
-        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, spinnerArray);
-        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(dataAdapter);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String language = spinnerMap.get(spinnerArray.get(i));
-                /* SpeechToText and TextToSpeech need the Locale Tag format */
-                setLanguage(language);
-                textToSpeech.setLanguage(new Locale(language));
-                /* In the babel message only the translate format is necessary */
-                srcDestLanguage = language.substring(0, 2);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
-        spinner.setSelection(0);
+        });*/
     }
 
     @Override
@@ -207,15 +99,14 @@ public class MainActivity extends AppCompatActivity implements
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
             Log.i(LOG_TAG, "destroy");
-
         }
     }
 
     @Override
     public void onBeginningOfSpeech() {
         Log.i(LOG_TAG, "onBeginningOfSpeech");
-        progressBar.setIndeterminate(false);
-        progressBar.setMax(10);
+//        progressBar.setIndeterminate(false);
+//        progressBar.setMax(10);
     }
 
     @Override
@@ -227,8 +118,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onError(int errorCode) {
         String errorMessage = getErrorText(errorCode);
         Log.d(LOG_TAG, "FAILED " + errorMessage);
-        returnedText.setText(errorMessage);
-        toggleButton.setChecked(false);
+        Snackbar.make(parentLayout, errorMessage, Snackbar.LENGTH_LONG).show();
+//        returnedText.setText(errorMessage);
+//        toggleButton.setChecked(false);
     }
 
     @Override
@@ -249,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onEndOfSpeech() {
         Log.i(LOG_TAG, "onEndOfSpeech");
-        progressBar.setIndeterminate(true);
-        toggleButton.setChecked(false);
+//        progressBar.setIndeterminate(true);
+//        toggleButton.setChecked(false);
         avoidDuplicates.clear();
     }
 
@@ -275,11 +167,11 @@ public class MainActivity extends AppCompatActivity implements
 
         BabelMessage message = new BabelMessage();
         message.setMessage(text);
-        message.setLocale(srcDestLanguage);
+        message.setLocale(translationLanguage);
 
         for (String friendName : friends) {
             if (!friendName.equals(userName)) {
-                getFirebase().child(room).child("chat").child(friendName).push().setValue(message);
+                FirebaseManager.getInstance().sendBabelMessage(friendName, message);
             }
         }
     }
@@ -294,10 +186,10 @@ public class MainActivity extends AppCompatActivity implements
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
 
-                    if (srcDestLanguage.equals(lcl)) {
+                    if (translationLanguage.equals(lcl)) {
                         return msg;
                     } else {
-                        return translate(msg, lcl, srcDestLanguage);
+                        return translate(msg, lcl, translationLanguage);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -307,82 +199,15 @@ public class MainActivity extends AppCompatActivity implements
 
             @Override
             protected void onPostExecute(String s) {
-                returnedText.setText(s);
+//                returnedText.setText(s);
                 speakOut(s);
             }
         }.execute(message);
     }
 
-    public void joinChat(View view) {
-        userName = editText.getText().toString();
-
-        getFirebase().child(room).child("friends").child(userName).setValue("name");
-
-        getFirebase().child(room).child("chat").child(userName).addChildEventListener(
-                new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
-                        textToSpeechPlay(message);
-//                        dataSnapshot.getRef().removeValue();
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                }
-        );
-
-        getFirebase().child(room).child("friends").addChildEventListener(
-                new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        friends.add(dataSnapshot.getKey());
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                }
-        );
-
-    }
-
     @Override
     public void onRmsChanged(float rmsdB) {
-        progressBar.setProgress((int) rmsdB);
+//        progressBar.setProgress((int) rmsdB);
     }
 
     @Override
@@ -396,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TTS", "This Language is not supported");
             } else {
-                speakOut(returnedText.getText().toString());
+//                speakOut(returnedText.getText().toString());
             }
 
         } else {
@@ -416,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements
             textToSpeech.shutdown();
         }
         if (userName != null) {
-            getFirebase().child(room).child("friends").child(userName).removeValue();
+            FirebaseManager.getInstance().removeUser(userName);
         }
         super.onDestroy();
     }

@@ -2,4 +2,8 @@
     <string name="app_name">BabelFish</string>
     <string name="user_name">User name</string>
     <string name="ok">OK</string>
+    <string name="in_out_language">Your input and output language</string>
+    <string name="your_name">Your Name</string>
+    <string name="join">Join</string>
+    <string name="user_name_null">User Name should not be empty.</string>
 </resources>
