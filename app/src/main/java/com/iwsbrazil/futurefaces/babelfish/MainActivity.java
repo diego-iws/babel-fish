@@ -54,29 +54,26 @@ import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.se
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener, TextToSpeech.OnInitListener {
 
+    private final static String LOG_TAG = "Voice";
+
     private ToggleButton toggleButton;
     private ProgressBar progressBar;
-
     private TextView returnedText;
     private Spinner spinner;
     private EditText editText;
 
     private String room = "TestRoom";
     private String userName;
-
-    private TextToSpeech textToSpeech;
+    private String srcDestLanguage;
 
     private SpeechRecognizer speechRecognizer = null;
-    private String LOG_TAG = "Voice";
+    private TextToSpeech textToSpeech;
     private Intent recognizerIntent;
 
     private DatabaseReference firebase;
-
     private Translate translate;
-    private String sourceLanguage;
 
     private List<String> friends = new ArrayList<>();
-
     private Set<String> avoidDuplicates = new HashSet<>();
 
     public Translate getTranslate() {
@@ -110,12 +107,10 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     });
         }
-
         return firebase;
     }
 
     public String translate(String text, String langFrom, String langTo) throws Exception {
-
         List<String> query = new ArrayList<>(Collections.singletonList(text));
         Translate.Translations.List list = getTranslate().translations().list(query, langTo);
         list.setKey(getString(R.string.google_api_key));
@@ -188,9 +183,11 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String language = spinnerMap.get(spinnerArray.get(i));
-                sourceLanguage = language;
+                /* SpeechToText and TextToSpeech need the Locale Tag format */
                 setLanguage(language);
                 textToSpeech.setLanguage(new Locale(language));
+                /* In the babel message only the translate format is necessary */
+                srcDestLanguage = language.substring(0, 2);
             }
 
             @Override
@@ -275,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements
 
         BabelMessage message = new BabelMessage();
         message.setMessage(text);
-        message.setLocale(sourceLanguage.substring(0, 2));
+        message.setLocale(srcDestLanguage);
 
         for (String friendName : friends) {
             if (!friendName.equals(userName)) {
@@ -294,10 +291,13 @@ public class MainActivity extends AppCompatActivity implements
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
 
-                    if (sourceLanguage.equals(lcl)) {
+                    Log.d("doInBackground", lcl);
+                    Log.d("doInBackground", srcDestLanguage);
+
+                    if (srcDestLanguage.equals(lcl)) {
                         return msg;
                     } else {
-                        return translate(msg, lcl, sourceLanguage);
+                        return translate(msg, lcl, srcDestLanguage);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -415,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
-        getFirebase().child(room).child(userName).getRef().removeValue();
+        getFirebase().child(room).child("friends").child(userName).getRef().removeValue();
         super.onDestroy();
     }
 }
