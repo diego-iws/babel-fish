@@ -9,6 +9,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.iwsbrazil.futurefaces.babelfish.LoginActivity;
+import com.iwsbrazil.futurefaces.babelfish.MainActivity;
 import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class FirebaseManager {
         getDatabaseReference().child(room).child("friends").child(userName).removeValue();
     }
 
-    public void addUser(String userName) {
+    public void addUser(String userName, final MainActivity mainActivity, final String language) {
         getDatabaseReference().child(room).child("friends").child(userName).setValue("name");
 
         getDatabaseReference().child(room).child("chat").child(userName).addChildEventListener(
@@ -61,8 +62,8 @@ public class FirebaseManager {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
-//                        textToSpeechPlay(message);
-//                        dataSnapshot.getRef().removeValue();
+                        TextToSpeechHelper.getInstance(mainActivity).textToSpeechPlay(message, language);
+                        dataSnapshot.getRef().removeValue();
                     }
 
                     @Override

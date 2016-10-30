@@ -1,7 +1,6 @@
 package com.iwsbrazil.futurefaces.babelfish;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
@@ -15,6 +14,7 @@ import android.view.View;
 
 import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
 import com.iwsbrazil.futurefaces.babelfish.util.FirebaseManager;
+import com.iwsbrazil.futurefaces.babelfish.util.TextToSpeechHelper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,22 +26,18 @@ import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.cr
 import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.getErrorText;
 import static com.iwsbrazil.futurefaces.babelfish.util.SpeechRecognizerHelper.setLanguage;
 import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.initTranslate;
-import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.translate;
 
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener, TextToSpeech.OnInitListener {
 
     private final static String LOG_TAG = "Voice";
 
-    private FloatingActionButton buttonSpeak;
     private CoordinatorLayout parentLayout;
 
     private String userName;
-    private String fullLanguage;
     private String translationLanguage;
 
     private SpeechRecognizer speechRecognizer = null;
-    private TextToSpeech textToSpeech;
     private Intent recognizerIntent;
 
     private List<String> friends = new ArrayList<>();
@@ -51,14 +47,14 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
         parentLayout = (CoordinatorLayout) findViewById(R.id.parent_layout);
 
         Intent caller = getIntent();
         userName = caller.getStringExtra("userName");
-        fullLanguage = caller.getStringExtra("language");
+        String fullLanguage = caller.getStringExtra("language");
         translationLanguage = fullLanguage.substring(0, 2);
-        FirebaseManager.getInstance().addUser(userName);
+        TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
+        FirebaseManager.getInstance().addUser(userName, this, fullLanguage);
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         speechRecognizer.setRecognitionListener(this);
@@ -66,8 +62,8 @@ public class MainActivity extends AppCompatActivity implements
         setLanguage(fullLanguage);
 
         initTranslate(this);
-        textToSpeech = new TextToSpeech(this, this);
 
+        FloatingActionButton buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
         buttonSpeak.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -176,73 +172,21 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void textToSpeechPlay(final BabelMessage message) {
-
-        new AsyncTask<BabelMessage, String, String>() {
-            @Override
-            protected String doInBackground(BabelMessage[] objects) {
-                try {
-                    BabelMessage msgin = objects[0];
-                    String msg = msgin.getMessage();
-                    String lcl = msgin.getLocale();
-
-                    if (translationLanguage.equals(lcl)) {
-                        return msg;
-                    } else {
-                        return translate(msg, lcl, translationLanguage);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return e.getMessage();
-                }
-            }
-
-            @Override
-            protected void onPostExecute(String s) {
-//                returnedText.setText(s);
-                speakOut(s);
-            }
-        }.execute(message);
-    }
-
     @Override
     public void onRmsChanged(float rmsdB) {
 //        progressBar.setProgress((int) rmsdB);
     }
 
     @Override
-    public void onInit(int status) {
-
-        if (status == TextToSpeech.SUCCESS) {
-
-            int result = textToSpeech.setLanguage(Locale.US);
-
-            if (result == TextToSpeech.LANG_MISSING_DATA
-                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TTS", "This Language is not supported");
-            } else {
-//                speakOut(returnedText.getText().toString());
-            }
-
-        } else {
-            Log.e("TTS", "Initilization Failed!");
-        }
-    }
-
-    private void speakOut(String text) {
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-        Log.d("SPEAK", text);
-    }
-
-    @Override
     public void onDestroy() {
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
+        TextToSpeechHelper.getInstance(this).destroy();
+
         if (userName != null) {
             FirebaseManager.getInstance().removeUser(userName);
         }
         super.onDestroy();
     }
+
+    @Override
+    public void onInit(int i) {}
 }

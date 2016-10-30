@@ -71,7 +71,6 @@ public class LoginActivity extends AppCompatActivity implements OnCompleteListen
                 language = spinnerMap.get(spinnerArray.get(i));
                 /* SpeechToText and TextToSpeech need the Locale Tag format */
 //                setLanguage(language);
-//                textToSpeech.setLanguage(new Locale(language));
                 /* In the babel message only the translate format is necessary */
 //                srcDestLanguage = language.substring(0, 2);
             }
