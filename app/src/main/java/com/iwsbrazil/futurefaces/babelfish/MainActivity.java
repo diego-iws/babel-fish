@@ -209,12 +209,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void updateAvatar(String avatarName) {
+        Log.d("updateAvatar", avatarName);
         talking.setVisibility(View.VISIBLE);
         name.setText(avatarName);
         name.setVisibility(View.VISIBLE);
     }
 
     public void hideAvatar() {
+        Log.d("hideAvatar", "aham");
         talking.setVisibility(View.INVISIBLE);
         name.setVisibility(View.INVISIBLE);
     }

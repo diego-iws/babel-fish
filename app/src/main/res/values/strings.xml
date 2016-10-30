@@ -7,4 +7,5 @@
     <string name="join">Join</string>
     <string name="user_name_null">User Name should not be empty.</string>
     <string name="is_talking">is talking</string>
+    <string name="is_speaking">is speaking</string>
 </resources>

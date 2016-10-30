@@ -62,7 +62,21 @@ public class TextToSpeechHelper {
     private void speakOut(String text) {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         Log.d("SPEAK", text);
-        activity.hideAvatar();
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                while (textToSpeech.isSpeaking()) {
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                activity.hideAvatar();
+            }
+        }.execute();
     }
 
     public void destroy() {
