@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements
         parentLayout = (CoordinatorLayout) findViewById(R.id.parent_layout);
         name = (TextView) findViewById(R.id.user_name);
         talking = (TextView) findViewById(R.id.talking);
+        buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
 
         Intent caller = getIntent();
         userName = caller.getStringExtra("userName");
@@ -75,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements
 
         initTranslate(this);
 
-        final FloatingActionButton buttonSpeak = (FloatingActionButton) findViewById(R.id.button_speak);
         buttonSpeak.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -136,8 +136,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onBeginningOfSpeech() {
         Log.i(LOG_TAG, "onBeginningOfSpeech");
-//        progressBar.setIndeterminate(false);
-//        progressBar.setMax(10);
     }
 
     @Override
@@ -150,8 +148,6 @@ public class MainActivity extends AppCompatActivity implements
         String errorMessage = getErrorText(errorCode);
         Log.d(LOG_TAG, "FAILED " + errorMessage);
         Snackbar.make(parentLayout, errorMessage, Snackbar.LENGTH_LONG).show();
-//        returnedText.setText(errorMessage);
-//        toggleButton.setChecked(false);
     }
 
     @Override
@@ -172,8 +168,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onEndOfSpeech() {
         Log.i(LOG_TAG, "onEndOfSpeech");
-//        progressBar.setIndeterminate(true);
-//        toggleButton.setChecked(false);
         avoidDuplicates.clear();
     }
 
@@ -209,14 +203,12 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void updateAvatar(String avatarName) {
-        Log.d("updateAvatar", avatarName);
         talking.setVisibility(View.VISIBLE);
         name.setText(avatarName);
         name.setVisibility(View.VISIBLE);
     }
 
     public void hideAvatar() {
-        Log.d("hideAvatar", "aham");
         talking.setVisibility(View.INVISIBLE);
         name.setVisibility(View.INVISIBLE);
     }
@@ -238,7 +230,6 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onInit(int status) {
-        Log.d("OOOONNNNUINIIIIT", "IPSRNGOISRHGIOSRHIO");
         if (status == TextToSpeech.SUCCESS) {
             TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
         } else {

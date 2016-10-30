@@ -47,11 +47,13 @@ public class LoginActivity extends AppCompatActivity implements OnCompleteListen
 
         //Available locales for the app
         Locale localePtBr = new Locale("pt", "BR");
+        Locale localeEsES = new Locale("es", "ES");
         List<Locale> locales = new ArrayList<>(Arrays.asList(
                 Locale.ENGLISH,
                 Locale.FRANCE,
                 Locale.ITALIAN,
                 Locale.GERMAN,
+                localeEsES,
                 localePtBr));
 
         final List<String> spinnerArray = new ArrayList<>();
