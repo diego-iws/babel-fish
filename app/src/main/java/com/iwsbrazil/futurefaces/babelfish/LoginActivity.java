@@ -97,69 +97,6 @@ public class LoginActivity extends AppCompatActivity implements OnCompleteListen
         intent.putExtra("userName", userName);
         intent.putExtra("language", language);
         startActivity(intent);
-
-//        getFirebase().child(room).child("friends").child(userName).setValue("name");
-//
-//        getFirebase().child(room).child("chat").child(userName).addChildEventListener(
-//                new ChildEventListener() {
-//                    @Override
-//                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-//                        BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
-//                        textToSpeechPlay(message);
-////                        dataSnapshot.getRef().removeValue();
-//                    }
-//
-//                    @Override
-//                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError databaseError) {
-//
-//                    }
-//                }
-//        );
-//
-//        getFirebase().child(room).child("friends").addChildEventListener(
-//                new ChildEventListener() {
-//                    @Override
-//                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-//                        friends.add(dataSnapshot.getKey());
-//                    }
-//
-//                    @Override
-//                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError databaseError) {
-//
-//                    }
-//                }
-//        );
-
     }
 
     @Override

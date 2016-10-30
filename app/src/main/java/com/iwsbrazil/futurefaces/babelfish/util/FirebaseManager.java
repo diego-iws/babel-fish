@@ -19,8 +19,8 @@ import java.util.List;
  */
 public class FirebaseManager {
     private static FirebaseManager firebaseManager;
-    private DatabaseReference databaseReference;
     private static String room = "TestRoom";
+    private DatabaseReference databaseReference;
     private List<String> friends = new ArrayList<>();
 
 
@@ -35,7 +35,11 @@ public class FirebaseManager {
         return firebaseManager;
     }
 
-    public DatabaseReference getDatabaseReference() {
+    public List<String> getFriends() {
+        return friends;
+    }
+
+    private DatabaseReference getDatabaseReference() {
         return databaseReference;
     }
 
@@ -115,7 +119,6 @@ public class FirebaseManager {
     }
 
     public void sendBabelMessage(String friendName, BabelMessage message) {
-        Log.d("sendBabel", friendName + message);
         getDatabaseReference().child(room).child("chat").child(friendName).push().setValue(message);
     }
 }

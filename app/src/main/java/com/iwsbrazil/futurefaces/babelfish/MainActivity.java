@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements
         message.setMessage(text);
         message.setLocale(translationLanguage);
 
-        for (String friendName : friends) {
+        for (String friendName : FirebaseManager.getInstance().getFriends()) {
             if (!friendName.equals(userName)) {
                 FirebaseManager.getInstance().sendBabelMessage(friendName, message);
             }
