@@ -69,10 +69,6 @@ public class LoginActivity extends AppCompatActivity implements OnCompleteListen
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 language = spinnerMap.get(spinnerArray.get(i));
-                /* SpeechToText and TextToSpeech need the Locale Tag format */
-//                setLanguage(language);
-                /* In the babel message only the translate format is necessary */
-//                srcDestLanguage = language.substring(0, 2);
             }
 
             @Override

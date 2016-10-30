@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 import com.iwsbrazil.futurefaces.babelfish.model.BabelMessage;
 import com.iwsbrazil.futurefaces.babelfish.util.FirebaseManager;
@@ -38,8 +39,9 @@ public class MainActivity extends AppCompatActivity implements
     public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0;
     private final static String LOG_TAG = "Voice";
     private FloatingActionButton buttonSpeak;
-
     private CoordinatorLayout parentLayout;
+    private TextView name;
+    private TextView talking;
 
     private String userName;
     private String translationLanguage;
@@ -56,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         parentLayout = (CoordinatorLayout) findViewById(R.id.parent_layout);
+        name = (TextView) findViewById(R.id.user_name);
+        talking = (TextView) findViewById(R.id.talking);
 
         Intent caller = getIntent();
         userName = caller.getStringExtra("userName");
@@ -195,12 +199,24 @@ public class MainActivity extends AppCompatActivity implements
         BabelMessage message = new BabelMessage();
         message.setMessage(text);
         message.setLocale(translationLanguage);
+        message.setSender(userName);
 
         for (String friendName : FirebaseManager.getInstance().getFriends()) {
             if (!friendName.equals(userName)) {
                 FirebaseManager.getInstance().sendBabelMessage(friendName, message);
             }
         }
+    }
+
+    public void updateAvatar(String avatarName) {
+        talking.setVisibility(View.VISIBLE);
+        name.setText(avatarName);
+        name.setVisibility(View.VISIBLE);
+    }
+
+    public void hideAvatar() {
+        talking.setVisibility(View.INVISIBLE);
+        name.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -220,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onInit(int status) {
+        Log.d("OOOONNNNUINIIIIT", "IPSRNGOISRHGIOSRHIO");
         if (status == TextToSpeech.SUCCESS) {
             TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
         } else {

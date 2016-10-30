@@ -11,19 +11,18 @@ import java.util.Locale;
 
 import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.translate;
 
-/**
- * Created by administrador on 30/10/16.
- */
-
 public class TextToSpeechHelper {
 
     private static TextToSpeechHelper instance;
     private static TextToSpeech textToSpeech;
+    private static MainActivity activity;
+    private String sender;
 
-    public static TextToSpeechHelper getInstance(MainActivity context) {
-        if (instance ==  null) {
+    public static TextToSpeechHelper getInstance(MainActivity mainActivity) {
+        if (instance == null) {
+            activity = mainActivity;
             instance = new TextToSpeechHelper();
-            textToSpeech = new TextToSpeech(context, context);
+            textToSpeech = new TextToSpeech(mainActivity, mainActivity);
             textToSpeech.setLanguage(Locale.US);
         }
         return instance;
@@ -38,6 +37,8 @@ public class TextToSpeechHelper {
                     BabelMessage msgin = objects[0];
                     String msg = msgin.getMessage();
                     String lcl = msgin.getLocale();
+                    sender = msgin.getSender();
+
 
                     if (translationLanguage.equals(lcl)) {
                         return msg;
@@ -52,16 +53,16 @@ public class TextToSpeechHelper {
 
             @Override
             protected void onPostExecute(String s) {
-
+                activity.updateAvatar(sender);
                 speakOut(s);
             }
         }.execute(message);
     }
 
     private void speakOut(String text) {
-        Log.d("speaks", "speks" + textToSpeech.getLanguage().getDisplayCountry());
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         Log.d("SPEAK", text);
+        activity.hideAvatar();
     }
 
     public void destroy() {

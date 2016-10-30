@@ -8,6 +8,15 @@ public class BabelMessage {
 
     private String message;
     private String locale;
+    private String sender;
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
 
     public String getLocale() {
         return locale;

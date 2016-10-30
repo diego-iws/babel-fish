@@ -6,4 +6,5 @@
     <string name="your_name">Your Name</string>
     <string name="join">Join</string>
     <string name="user_name_null">User Name should not be empty.</string>
+    <string name="is_talking">is talking</string>
 </resources>
