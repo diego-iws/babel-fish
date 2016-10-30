@@ -52,13 +52,14 @@ public class TextToSpeechHelper {
 
             @Override
             protected void onPostExecute(String s) {
-//                returnedText.setText(s);
+
                 speakOut(s);
             }
         }.execute(message);
     }
 
     private void speakOut(String text) {
+        Log.d("speaks", "speks" + textToSpeech.getLanguage().getDisplayCountry());
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         Log.d("SPEAK", text);
     }

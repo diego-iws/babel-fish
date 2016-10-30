@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private String userName;
     private String translationLanguage;
+    private String fullLanguage;
 
     private SpeechRecognizer speechRecognizer = null;
     private Intent recognizerIntent;
@@ -58,9 +59,9 @@ public class MainActivity extends AppCompatActivity implements
 
         Intent caller = getIntent();
         userName = caller.getStringExtra("userName");
-        String fullLanguage = caller.getStringExtra("language");
+        fullLanguage = caller.getStringExtra("language");
         translationLanguage = fullLanguage.substring(0, 2);
-        TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
+        TextToSpeechHelper.getInstance(this);
         FirebaseManager.getInstance().addUser(userName, this, translationLanguage);
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
@@ -218,5 +219,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onInit(int i) {}
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
+        } else {
+            Log.e("TTS", "Initilization Failed!");
+        }
+    }
 }
