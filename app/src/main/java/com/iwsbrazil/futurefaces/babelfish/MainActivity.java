@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements
         String fullLanguage = caller.getStringExtra("language");
         translationLanguage = fullLanguage.substring(0, 2);
         TextToSpeechHelper.getInstance(this).setLanguage(new Locale(fullLanguage));
-        FirebaseManager.getInstance().addUser(userName, this, fullLanguage);
+        FirebaseManager.getInstance().addUser(userName, this, translationLanguage);
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         speechRecognizer.setRecognitionListener(this);

@@ -23,6 +23,8 @@ public class FirebaseManager {
     private static String room = "TestRoom";
     private DatabaseReference databaseReference;
     private List<String> friends = new ArrayList<>();
+    private ChildEventListener chatListener;
+    private ChildEventListener friendsListener;
 
 
     private FirebaseManager() {
@@ -52,13 +54,15 @@ public class FirebaseManager {
     public void removeUser(String userName) {
         Log.d("remove", userName);
         getDatabaseReference().child(room).child("friends").child(userName).removeValue();
+        getDatabaseReference().child(room).child("chat").child(userName).removeEventListener(chatListener);
+        getDatabaseReference().child(room).child("friends").removeEventListener(friendsListener);
     }
 
     public void addUser(String userName, final MainActivity mainActivity, final String language) {
         getDatabaseReference().child(room).child("friends").child(userName).setValue("name");
 
-        getDatabaseReference().child(room).child("chat").child(userName).addChildEventListener(
-                new ChildEventListener() {
+        chatListener = getDatabaseReference().child(room).child("chat").child(userName).addChildEventListener(
+                 new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         BabelMessage message = dataSnapshot.getValue(BabelMessage.class);
@@ -88,7 +92,7 @@ public class FirebaseManager {
                 }
         );
 
-        getDatabaseReference().child(room).child("friends").addChildEventListener(
+        friendsListener = getDatabaseReference().child(room).child("friends").addChildEventListener(
                 new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
