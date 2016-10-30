@@ -1,6 +1,7 @@
 package com.iwsbrazil.futurefaces.babelfish;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
@@ -8,6 +9,8 @@ import android.speech.tts.TextToSpeech;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -30,7 +33,9 @@ import static com.iwsbrazil.futurefaces.babelfish.util.TranslatorHelper.initTran
 public class MainActivity extends AppCompatActivity implements
         RecognitionListener, TextToSpeech.OnInitListener {
 
+    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0;
     private final static String LOG_TAG = "Voice";
+    private FloatingActionButton buttonSpeak;
 
     private CoordinatorLayout parentLayout;
 
@@ -67,26 +72,39 @@ public class MainActivity extends AppCompatActivity implements
         buttonSpeak.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                speechRecognizer.startListening(recognizerIntent);
+                requirePermission();
             }
         });
+    }
 
-        /*toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+    public void requirePermission() {
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
 
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
-                if (isChecked) {
-                    progressBar.setVisibility(View.VISIBLE);
-                    progressBar.setIndeterminate(true);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.RECORD_AUDIO},
+                    MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
+        } else {
+            speechRecognizer.startListening(recognizerIntent);
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_RECORD_AUDIO: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
                     speechRecognizer.startListening(recognizerIntent);
-                } else {
-                    progressBar.setIndeterminate(false);
-                    progressBar.setVisibility(View.INVISIBLE);
-                    speechRecognizer.stopListening();
+
                 }
             }
-        });*/
+        }
     }
 
     @Override
